@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gallery Prompt Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f0f0d;
+  --bg2: #181816;
+  --bg3: #222220;
+  --line: rgba(255,255,255,0.07);
+  --line2: rgba(255,255,255,0.15);
+  --text: #e8e6df;
+  --muted: #7a7870;
+  --accent: #c8b89a;
+  --accent2: #8fa89e;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --mono: 'DM Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+::selection { background: var(--accent); color: var(--bg); }
+
+/* ── HEADER ── */
+header {
+  padding: 28px 48px;
+  border-bottom: 0.5px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.logo {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  color: var(--text);
+}
+.logo span { color: var(--accent); font-style: italic; }
+.header-tag {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 0.5px solid var(--line2);
+  padding: 4px 12px;
+  border-radius: 2px;
+}
+
+/* ── MAIN LAYOUT ── */
+main {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  min-height: calc(100vh - 73px);
+}
+
+/* ── LEFT PANEL ── */
+.panel-left {
+  border-right: 0.5px solid var(--line);
+  padding: 40px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.panel-title {
+  font-family: var(--serif);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0;
+}
+
+/* API KEY */
+.api-section {
+  background: var(--bg2);
+  border: 0.5px solid var(--line2);
+  border-radius: 4px;
+  padding: 16px 18px;
+}
+.api-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.api-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: background 0.3s;
+}
+.api-dot.connected { background: #6dbf8a; }
+input[type="password"], input[type="text"], textarea, select {
+  width: 100%;
+  background: var(--bg3);
+  border: 0.5px solid var(--line2);
+  border-radius: 3px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+input[type="password"]:focus,
+input[type="text"]:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--accent);
+}
+input[type="password"]::placeholder,
+textarea::placeholder { color: var(--muted); }
+
+/* BRIEF FORM */
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+.form-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237a7870' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+select option { background: var(--bg3); }
+textarea { resize: vertical; min-height: 80px; line-height: 1.7; }
+
+/* GENERATE BUTTON */
+.btn-generate {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  font-weight: 400;
+}
+.btn-generate:hover { opacity: 0.88; }
+.btn-generate:active { transform: scale(0.99); }
+.btn-generate:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.btn-clear {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  color: var(--muted);
+  border: 0.5px solid var(--line2);
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.btn-clear:hover { color: var(--text); border-color: var(--muted); }
+
+/* ── RIGHT PANEL ── */
+.panel-right {
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 28px;
+}
+.result-title {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--text);
+}
+.result-count {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* LOADING */
+.loading-state {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  gap: 20px;
+}
+.loading-state.active { display: flex; }
+.loader {
+  width: 40px; height: 40px;
+  border: 0.5px solid var(--line2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* EMPTY STATE */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  gap: 16px;
+  opacity: 0.4;
+}
+.empty-icon {
+  width: 64px; height: 64px;
+  border: 0.5px solid var(--line2);
+  border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+}
+.empty-text { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.8; }
+
+/* RESULT CARDS */
+.results-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.result-card {
+  background: var(--bg2);
+  border: 0.5px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+  animation: fadeIn 0.4s ease forwards;
+  opacity: 0;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card-header {
+  padding: 16px 20px 14px;
+  border-bottom: 0.5px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.card-type {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 2px;
+}
+.type-positive { background: rgba(200,184,154,0.1); color: var(--accent); border: 0.5px solid rgba(200,184,154,0.25); }
+.type-negative { background: rgba(224,100,80,0.08); color: #d4806a; border: 0.5px solid rgba(224,100,80,0.2); }
+.type-style { background: rgba(143,168,158,0.1); color: var(--accent2); border: 0.5px solid rgba(143,168,158,0.25); }
+.type-technical { background: rgba(120,120,180,0.08); color: #9898cc; border: 0.5px solid rgba(120,120,180,0.2); }
+
+.card-num { font-size: 11px; color: var(--muted); }
+
+.card-body { padding: 18px 20px; }
+.card-prompt {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.85;
+  word-break: break-word;
+}
+.card-prompt.en { font-size: 12px; color: var(--muted); margin-top: 10px; font-style: italic; }
+
+.card-footer {
+  padding: 12px 20px;
+  border-top: 0.5px solid var(--line);
+  display: flex;
+  gap: 8px;
+}
+.btn-copy {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: transparent;
+  border: 0.5px solid var(--line2);
+  padding: 5px 14px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.btn-copy:hover { color: var(--text); border-color: var(--muted); }
+.btn-copy.copied { color: var(--accent2); border-color: var(--accent2); }
+
+/* ANALYSIS CARD */
+.analysis-card {
+  background: var(--bg2);
+  border: 0.5px solid rgba(200,184,154,0.2);
+  border-radius: 4px;
+  padding: 24px;
+  margin-top: 20px;
+  animation: fadeIn 0.4s 0.3s ease forwards;
+  opacity: 0;
+}
+.analysis-title {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+.analysis-text {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.9;
+}
+
+/* ARCHIVE */
+.archive-section {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 0.5px solid var(--line);
+}
+.archive-title {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.archive-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg2);
+  border: 0.5px solid var(--line);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.archive-item:hover { border-color: var(--line2); }
+.archive-brief { font-size: 12px; color: var(--text); }
+.archive-time { font-size: 10px; color: var(--muted); }
+
+/* ERROR */
+.error-box {
+  background: rgba(200,60,60,0.06);
+  border: 0.5px solid rgba(200,60,60,0.2);
+  border-radius: 3px;
+  padding: 14px 18px;
+  font-size: 12px;
+  color: #d4806a;
+  display: none;
+}
+.error-box.active { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Gallery <span>Prompt</span> Generator</div>
+  <span class="header-tag">AI Interior Design — R&amp;D Project</span>
+</header>
+
+<main>
+  <!-- LEFT: INPUT PANEL -->
+  <div class="panel-left">
+
+    <div>
+      <p class="panel-title">Configuration</p>
+    </div>
+
+    <!-- API KEY -->
+    <div class="api-section">
+      <div class="api-label">
+        <span class="api-dot" id="apiDot"></span>
+        Anthropic API Key
+      </div>
+      <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off">
+      <p style="font-size:10px; color:var(--muted); margin-top:8px; line-height:1.7;">
+        키는 브라우저에만 저장되며 외부로 전송되지 않습니다.
+      </p>
+    </div>
+
+    <!-- BRIEF FORM -->
+    <div class="form-group">
+      <label class="form-label">공간 유형</label>
+      <select id="spaceType">
+        <option value="contemporary art gallery">현대미술 갤러리</option>
+        <option value="photography gallery">사진 전시 갤러리</option>
+        <option value="sculpture gallery">조각 전시 공간</option>
+        <option value="media art gallery">미디어아트 갤러리</option>
+        <option value="mixed-use gallery with cafe">갤러리 + 카페 복합</option>
+        <option value="underground gallery">지하 갤러리</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">위치 & 맥락</label>
+      <select id="location">
+        <option value="Seoul Seongsu-dong industrial district">서울 성수동 산업 유산</option>
+        <option value="Seoul Samcheong-dong traditional alley">서울 삼청동 전통 골목</option>
+        <option value="Jeju Island natural landscape">제주 자연 경관</option>
+        <option value="urban downtown high-rise">도심 고층 빌딩</option>
+        <option value="suburban converted warehouse">교외 창고 개조</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">조명</label>
+        <select id="lighting">
+          <option value="abundant natural daylight skylights">자연광 최대화</option>
+          <option value="dramatic artificial spotlights">극적 스포트라이트</option>
+          <option value="diffused soft ambient light">확산 간접광</option>
+          <option value="mixed natural and artificial">자연+인공 혼합</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">분위기</label>
+        <select id="mood">
+          <option value="minimal serene contemplative">미니멀·사색적</option>
+          <option value="brutalist raw industrial">브루탈·산업적</option>
+          <option value="organic warm biophilic">유기적·바이오필릭</option>
+          <option value="futuristic high-tech sleek">미래적·하이테크</option>
+          <option value="intimate cozy boutique">아늑한·부티크</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">재료 & 마감</label>
+      <select id="material">
+        <option value="exposed concrete polished stone">노출 콘크리트 + 폴리싱 스톤</option>
+        <option value="raw steel corten weathered">코르텐강 + 거친 금속</option>
+        <option value="warm wood terrazzo">따뜻한 원목 + 테라조</option>
+        <option value="white plaster glass">화이트 플라스터 + 유리</option>
+        <option value="brick terracotta earth tones">벽돌 + 테라코타</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">추가 키워드 (선택)</label>
+      <textarea id="keywords" placeholder="예: 중정, 루버, 하이윈도우, 더블하이트..."></textarea>
+    </div>
+
+    <div id="errorBox" class="error-box"></div>
+
+    <button class="btn-generate" id="generateBtn" onclick="generatePrompts()">
+      프롬프트 생성하기
+    </button>
+    <button class="btn-clear" onclick="clearResults()">결과 초기화</button>
+
+  </div>
+
+  <!-- RIGHT: RESULT PANEL -->
+  <div class="panel-right">
+
+    <div class="result-header">
+      <h1 class="result-title">Generated Prompts</h1>
+      <span class="result-count" id="resultCount"></span>
+    </div>
+
+    <div class="loading-state" id="loadingState">
+      <div class="loader"></div>
+      <p class="loading-text">Claude가 프롬프트를 생성하는 중...</p>
+    </div>
+
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <rect x="4" y="6" width="20" height="16" rx="1" stroke="#7a7870" stroke-width="0.8"/>
+          <rect x="8" y="10" width="5" height="6" stroke="#7a7870" stroke-width="0.6"/>
+          <rect x="15" y="10" width="5" height="6" stroke="#7a7870" stroke-width="0.6"/>
+          <line x1="4" y1="22" x2="24" y2="22" stroke="#7a7870" stroke-width="0.6"/>
+        </svg>
+      </div>
+      <p class="empty-text">API 키를 입력하고<br>공간 조건을 설정한 후<br>생성 버튼을 눌러주세요.</p>
+    </div>
+
+    <div class="results-grid" id="resultsGrid"></div>
+
+    <!-- ARCHIVE -->
+    <div class="archive-section" id="archiveSection" style="display:none">
+      <p class="archive-title">생성 기록 — Prompt Archive</p>
+      <div class="archive-list" id="archiveList"></div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+const archive = [];
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.textContent = msg;
+  box.classList.add('active');
+  setTimeout(() => box.classList.remove('active'), 5000);
+}
+
+function setLoading(on) {
+  document.getElementById('loadingState').classList.toggle('active', on);
+  document.getElementById('emptyState').style.display = on ? 'none' : '';
+  document.getElementById('generateBtn').disabled = on;
+}
+
+document.getElementById('apiKey').addEventListener('input', function() {
+  const dot = document.getElementById('apiDot');
+  dot.classList.toggle('connected', this.value.startsWith('sk-ant-'));
+});
+
+async function generatePrompts() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) { showError('API 키를 입력해주세요.'); return; }
+
+  const spaceType = document.getElementById('spaceType').value;
+  const location  = document.getElementById('location').value;
+  const lighting  = document.getElementById('lighting').value;
+  const mood      = document.getElementById('mood').value;
+  const material  = document.getElementById('material').value;
+  const keywords  = document.getElementById('keywords').value.trim();
+
+  const briefSummary = `${document.getElementById('spaceType').options[document.getElementById('spaceType').selectedIndex].text} / ${document.getElementById('location').options[document.getElementById('location').selectedIndex].text}`;
+
+  setLoading(true);
+  document.getElementById('resultsGrid').innerHTML = '';
+  document.getElementById('resultCount').textContent = '';
+
+  const systemPrompt = `You are an expert architectural interior designer and AI image prompt engineer specializing in gallery and exhibition spaces. 
+Your task is to generate highly detailed, effective Stable Diffusion / Midjourney prompts for interior architectural visualization.
+Always respond in valid JSON format only. No markdown, no explanation outside the JSON.`;
+
+  const userPrompt = `Create 4 distinct image generation prompts for this gallery interior design brief:
+- Space type: ${spaceType}
+- Location/context: ${location}  
+- Lighting: ${lighting}
+- Mood/atmosphere: ${mood}
+- Materials/finishes: ${material}
+- Additional keywords: ${keywords || 'none'}
+
+Return a JSON object with this exact structure:
+{
+  "analysis": "2-3 sentences in Korean explaining the design direction and key characteristics of this brief",
+  "prompts": [
+    {
+      "type": "positive",
+      "label": "메인 프롬프트",
+      "ko": "한국어로 이 프롬프트가 무엇을 표현하는지 1-2문장 설명",
+      "en": "highly detailed interior architectural photography of [space], [specific details], [materials], [lighting description], [mood], [camera angle], professional architectural photography, 8k uhd, sharp focus, photorealistic"
+    },
+    {
+      "type": "style",
+      "label": "스타일 프롬프트",
+      "ko": "한국어 설명",
+      "en": "style-focused prompt emphasizing the aesthetic direction"
+    },
+    {
+      "type": "technical",
+      "label": "기술적 파라미터",
+      "ko": "카메라 앵글, 렌즈, 렌더링 품질 관련 설명",
+      "en": "technical parameters: wide angle architectural lens, eye level perspective, --ar 16:9 --v 6 --q 2 --style raw"
+    },
+    {
+      "type": "negative",
+      "label": "네거티브 프롬프트",
+      "ko": "제외할 요소 설명",
+      "en": "negative prompt: people, furniture clutter, low quality, blurry, distorted, oversaturated, cartoon, illustration, text, watermark"
+    }
+  ]
+}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const raw = data.content[0].text.trim();
+    const json = JSON.parse(raw.replace(/```json|```/g, '').trim());
+
+    renderResults(json, briefSummary);
+    saveToArchive(briefSummary, json);
+
+  } catch (e) {
+    showError(`오류: ${e.message}`);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function renderResults(json, briefSummary) {
+  const grid = document.getElementById('resultsGrid');
+  grid.innerHTML = '';
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('resultCount').textContent = `${json.prompts.length}개 생성됨`;
+
+  json.prompts.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    card.style.animationDelay = `${i * 0.08}s`;
+    card.innerHTML = `
+      <div class="card-header">
+        <span class="card-type type-${p.type}">${p.label}</span>
+        <span class="card-num">${String(i+1).padStart(2,'0')}</span>
+      </div>
+      <div class="card-body">
+        <p class="card-prompt">${p.ko}</p>
+        <p class="card-prompt en">${p.en}</p>
+      </div>
+      <div class="card-footer">
+        <button class="btn-copy" onclick="copyPrompt(this, \`${p.en.replace(/`/g,"'")}\`)">EN 복사</button>
+        <button class="btn-copy" onclick="copyPrompt(this, \`${p.ko.replace(/`/g,"'")}\`)">KO 복사</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  const analysis = document.createElement('div');
+  analysis.className = 'analysis-card';
+  analysis.innerHTML = `
+    <p class="analysis-title">Design Analysis</p>
+    <p class="analysis-text">${json.analysis}</p>
+  `;
+  grid.appendChild(analysis);
+}
+
+function copyPrompt(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '복사됨 ✓';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = btn.textContent.includes('EN') ? 'EN 복사' : 'KO 복사';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+function saveToArchive(brief, json) {
+  const now = new Date();
+  const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  archive.unshift({ brief, json, time });
+
+  const section = document.getElementById('archiveSection');
+  const list = document.getElementById('archiveList');
+  section.style.display = 'block';
+
+  list.innerHTML = archive.map((item, i) => `
+    <div class="archive-item" onclick="reloadArchive(${i})">
+      <span class="archive-brief">${item.brief}</span>
+      <span class="archive-time">${item.time}</span>
+    </div>
+  `).join('');
+}
+
+function reloadArchive(i) {
+  renderResults(archive[i].json, archive[i].brief);
+}
+
+function clearResults() {
+  document.getElementById('resultsGrid').innerHTML = '';
+  document.getElementById('resultCount').textContent = '';
+  document.getElementById('emptyState').style.display = '';
+}
+</script>
+</body>
+</html>
